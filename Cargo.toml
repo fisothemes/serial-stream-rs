@@ -1,0 +1,10 @@
+[package]
+name = "serial-stream-rs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+authors = ["Goodwill Mzumala <fisothemes@egmail.com>"]
+repository = "https://github.com/fisothemes/serial-stream-rs"
+
+[dependencies]
+thiserror = "2"
