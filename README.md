@@ -29,7 +29,7 @@ fn main() -> Result<()> {
 
 ### Reading Lines and Splitting Streams
 
-For complex applications, you can split the stream into independent read and write halves. You can then intergrate these with standard library tools like `BufReader`. 
+For complex applications, you can simply split a `FullDuplex` stream into independent read and write halves. You can then intergrate these with standard library tools like `BufReader` or `Send` them to another thread.
 
 ```rust
 use serial_stream::blocking::{SerialStream, BaudRate};
@@ -39,7 +39,8 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
     let mut stream = SerialStream::open(("COM3", BaudRate::new(38400)))?;
-    
+
+    // Split into owned halves for lock-free concurrency.
     let (reader, mut writer) = stream.try_split()?;
     
     let mut reader = BufReader::new(reader);
@@ -56,7 +57,7 @@ fn main() -> Result<()> {
 
 ### Advanced Configuration
 
-If your extra configuration like hardware flow control, parity, or data terminal readiness, you can paa a full `SerialConfig` into the `SerialStream::open` method. The default configuration is the same as the python `serial` library's.
+If you need specific settings like hardware flow control, parity, or data terminal readiness, you can use the `SerialConfig` struct to build your configuration and pass it into the `SerialStream::open` method. The default configuration is the same as the python `serial` library's.
 
 ```rust
 use serial_stream::blocking::{SerialStream, SerialConfig, BuadRate, Parity, FlowControl};
@@ -73,6 +74,42 @@ fn main() -> Result<()> {
     
     // ... use stream here
     
+    Ok(())
+}
+```
+
+### Half-Duplex and RS-485 (Typestate Safety)
+
+`serial-stream` uses generic marker types (`SerialStream<D>`) to enforce hardware safety. This allows you to open a type-safe `HalfDuplex` port. This alters the available methods on the stream.
+
+```rust
+use serial_stream::blocking::{SerialStream, SerialConfig, BaudRate};
+use std::io::{Read, Write, Result};
+
+fn main() -> Result<()> {
+    // Transition the config to Half-Duplex (with a 5ms RTS turnaround delay)
+    let config = SerialConfig::new("/dev/ttyUSB0")
+        .with_baud_rate(BaudRate::B38400)
+        .into_half_duplex(5); 
+
+    let mut bus = SerialStream::open(config)?;
+
+    // `bus.try_split()?` doesn't exist for HalfDuplex streams.
+
+    // 1. Take control of the hardware bus (Transmit Mode)
+    bus.set_rts(true)?;
+    
+    // 2. Write data using standard traits
+    bus.write_all(b"POLL_SENSOR\n")?;
+    bus.flush_hardware()?; // Blocks until the last bit leaves the UART
+    
+    // 3. Release the bus (Receive Mode)
+    bus.set_rts(false)?;
+    
+    // 4. Safely read the response
+    let mut response = [0; 32];
+    bus.read(&mut response)?;
+
     Ok(())
 }
 ```
