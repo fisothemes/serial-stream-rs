@@ -10,6 +10,7 @@ It's easy to open a serial port, then send and receive data.
 
 ```rust
 use serial_stream::blocking::{SerialStream, BaudRate};
+use std::io::{Read, Write};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -60,13 +61,13 @@ fn main() -> Result<()> {
 If you need specific settings like hardware flow control, parity, or data terminal readiness, you can use the `SerialConfig` struct to build your configuration and pass it into the `SerialStream::open` method. The default configuration is the same as the python `serial` library's.
 
 ```rust
-use serial_stream::blocking::{SerialStream, SerialConfig, BuadRate, Parity, FlowControl};
+use serial_stream::blocking::{SerialStream, SerialConfig, BaudRate, Parity, FlowControl};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
     let config = SerialConfig::new("COM3")
-        .with_baud_rate(BuadRate::B115200)
+        .with_baud_rate(BaudRate::B115200)
         .with_parity(Parity::Even)
         .with_flow_control(FlowControl::Hardware)
         .with_dtr(true);
@@ -112,6 +113,50 @@ fn main() -> Result<()> {
     let mut response = [0; 32];
     bus.read(&mut response)?;
 
+    Ok(())
+}
+```
+
+### Handling Thread Interrupts and Stream Closures
+
+Under normal circumstances the port should automatically close when streams are dropped. However, if a stream is split across threads, simply dropping the writer will not wake up a permanently blocked reader thread.
+
+To handle graceful shutdowns in that situation, there is a `.purge()` API. This mirrors the ergonomics of `TcpStream::shutdown()`, which will safely interrupt blocking OS operations from another thread.
+
+```rust
+use serial_stream::blocking::{SerialStream, Purge};
+use std::io::{BufRead, BufReader, Write};
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+fn main() -> Result<()> {
+    let stream = SerialStream::open("COM1")?;
+    
+    let (reader, mut writer) = stream.try_split()?;
+    
+    let reader_handle = std::thread::spawn(move || {
+        let mut reader = BufReader::new(reader);
+        let mut line = String::new();
+
+        // This will block indefinitely until data arrives OR the hardware is purged.
+        match reader.read_line(&mut line) {
+            Ok(_) => println!("Received: {}", line),
+            Err(e) => println!("Reader safely interrupted: {}", e),
+        }
+        
+        println!("Reader thread shutting down.");
+    });
+    
+    writer.write_all(b"Disconnecting...\n")?;
+
+    // Send a hardware-level interrupt to the OS. 
+    // This instantly aborts the pending `.read_line()` on the reader thread,
+    // waking it up with an io::Error.
+    writer.purge(Purge::Read)?;
+
+    // Wait for the reader thread to gracefully exit!
+    let _ = reader_handle.join();
+    
     Ok(())
 }
 ```
