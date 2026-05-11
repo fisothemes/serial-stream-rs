@@ -127,8 +127,8 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
             parity: self.parity,
             stop_bits: self.stop_bits,
             flow_control: self.flow_control,
-            dtr: self.rts,
-            rts: self.dtr,
+            dtr: self.dtr,
+            rts: self.rts,
             mode: HalfDuplex::default(),
         }
     }
