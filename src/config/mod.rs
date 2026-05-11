@@ -135,20 +135,6 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
 }
 
 impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
-    pub fn new(port: P) -> Self {
-        Self {
-            port: port.into(),
-            baud_rate: BaudRate::default(),
-            data_bits: DataBits::default(),
-            parity: Parity::default(),
-            stop_bits: StopBits::default(),
-            flow_control: FlowControl::default(),
-            dtr: true,
-            rts: true,
-            mode: HalfDuplex::default(),
-        }
-    }
-
     pub fn with_rts_turnaround_delay_ms(mut self, value: u32) -> Self {
         self.mode = HalfDuplex::new(value, self.mode.invert_rts_pin());
         self
@@ -195,12 +181,6 @@ impl<P: AsRef<str>> From<SerialConfig<P, HalfDuplex>> for SerialConfig<P, FullDu
 }
 
 impl<T: AsRef<str>> From<T> for SerialConfig<T, FullDuplex> {
-    fn from(port: T) -> Self {
-        Self::new(port)
-    }
-}
-
-impl<T: AsRef<str>> From<T> for SerialConfig<T, HalfDuplex> {
     fn from(port: T) -> Self {
         Self::new(port)
     }
