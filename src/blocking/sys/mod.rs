@@ -1,4 +1,10 @@
 #[cfg(unix)]
-pub mod unix;
+mod unix;
 #[cfg(windows)]
-pub mod windows;
+mod windows;
+
+#[cfg(unix)]
+pub(super) use unix::InnerStream;
+
+#[cfg(windows)]
+pub(super) use windows::InnerStream;
