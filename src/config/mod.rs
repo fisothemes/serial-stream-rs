@@ -25,6 +25,8 @@ pub struct SerialConfig<P: AsRef<str>, D: Direction = FullDuplex> {
     parity: Parity,
     stop_bits: StopBits,
     flow_control: FlowControl,
+    dtr: bool,
+    rts: bool,
     mode: D,
 }
 
@@ -55,6 +57,16 @@ impl<P: AsRef<str>, D: Direction> SerialConfig<P, D> {
         self
     }
 
+    pub fn with_dtr(mut self, value: bool) -> Self {
+        self.dtr = value;
+        self
+    }
+
+    pub fn with_rts(mut self, value: bool) -> Self {
+        self.rts = value;
+        self
+    }
+
     pub fn port(&self) -> &Port<P> {
         &self.port
     }
@@ -79,6 +91,14 @@ impl<P: AsRef<str>, D: Direction> SerialConfig<P, D> {
         self.flow_control
     }
 
+    pub fn dtr(&self) -> bool {
+        self.dtr
+    }
+
+    pub fn rts(&self) -> bool {
+        self.rts
+    }
+
     pub fn mode(&self) -> &D {
         &self.mode
     }
@@ -93,6 +113,8 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
             parity: Parity::default(),
             stop_bits: StopBits::default(),
             flow_control: FlowControl::default(),
+            dtr: true,
+            rts: true,
             mode: FullDuplex::default(),
         }
     }
@@ -105,6 +127,8 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
             parity: self.parity,
             stop_bits: self.stop_bits,
             flow_control: self.flow_control,
+            dtr: self.rts,
+            rts: self.dtr,
             mode: HalfDuplex::default(),
         }
     }
@@ -119,6 +143,8 @@ impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
             parity: Parity::default(),
             stop_bits: StopBits::default(),
             flow_control: FlowControl::default(),
+            dtr: true,
+            rts: true,
             mode: HalfDuplex::default(),
         }
     }
@@ -149,6 +175,8 @@ impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
             parity: self.parity,
             stop_bits: self.stop_bits,
             flow_control: self.flow_control,
+            dtr: self.dtr,
+            rts: self.rts,
             mode: FullDuplex::default(),
         }
     }
