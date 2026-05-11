@@ -14,7 +14,7 @@ use serial_stream::blocking::{SerialStream, BaudRate};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
-    let mut stream = SerialStream::open(("COM3", BaudRate::B9600))?;
+    let mut stream = SerialStream::open("COM3")?;
     
     stream.write_all(b"AT\r\n")?;
     
@@ -65,10 +65,11 @@ use serial_stream::blocking::{SerialStream, SerialConfig, BuadRate, Parity, Flow
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
-    let config = SerialConfig::new("COM3", BuadRate::B115200)
+    let config = SerialConfig::new("COM3")
+        .with_baud_rate(BuadRate::B115200)
         .with_parity(Parity::Even)
         .with_flow_control(FlowControl::Hardware)
-        .with_data_terminal_ready(true);
+        .with_dtr(true);
     
     let mut stream = SerialStream::open(config)?;
     
@@ -90,7 +91,8 @@ fn main() -> Result<()> {
     // Transition the config to Half-Duplex (with a 5ms RTS turnaround delay)
     let config = SerialConfig::new("/dev/ttyUSB0")
         .with_baud_rate(BaudRate::B38400)
-        .into_half_duplex(5); 
+        .into_half_duplex()
+        .with_rts_turnaround_delay_ms(5);
 
     let mut bus = SerialStream::open(config)?;
 
