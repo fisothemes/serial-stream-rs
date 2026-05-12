@@ -168,18 +168,6 @@ impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
     }
 }
 
-impl<P: AsRef<str>> From<SerialConfig<P, FullDuplex>> for SerialConfig<P, HalfDuplex> {
-    fn from(config: SerialConfig<P, FullDuplex>) -> Self {
-        config.into_half_duplex()
-    }
-}
-
-impl<P: AsRef<str>> From<SerialConfig<P, HalfDuplex>> for SerialConfig<P, FullDuplex> {
-    fn from(config: SerialConfig<P, HalfDuplex>) -> Self {
-        config.into_full_duplex()
-    }
-}
-
 impl<T: AsRef<str>> From<T> for SerialConfig<T, FullDuplex> {
     fn from(port: T) -> Self {
         Self::new(port)
