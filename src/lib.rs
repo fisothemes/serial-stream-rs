@@ -1,3 +1,9 @@
 pub mod blocking;
-pub mod config;
+
 pub(crate) mod sys;
+
+mod config;
+mod purge;
+
+pub use config::*;
+pub use purge::*;
