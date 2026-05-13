@@ -1,15 +1,15 @@
-use serial_stream::{BaudRate, blocking::SerialStream};
-use std::io::{self, BufRead, BufReader, Read, Write};
+use serial_stream::{
+    BaudRate, Result,
+    blocking::{BufRead, BufReader, SerialStream, Write},
+};
 use std::thread;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() -> Result<()> {
     let stream = SerialStream::open(("COM3", BaudRate::B9600))?;
 
     let (reader, mut writer) = stream.try_split()?;
 
-    let reader_handle = thread::spawn(move || -> io::Result<()> {
+    let reader_handle = thread::spawn(move || -> Result<()> {
         let reader = BufReader::new(reader);
 
         for line in reader.lines() {

@@ -1,7 +1,9 @@
-use serial_stream::blocking::SerialStream;
-use std::io::{self, Read, Write};
+use serial_stream::{
+    Result,
+    blocking::{Read, SerialStream, Write},
+};
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     let mut stream = SerialStream::open("COM3")?;
 
     stream.write_all(b"AT\r\n")?;

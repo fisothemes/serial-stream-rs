@@ -7,3 +7,4 @@ mod purge;
 
 pub use config::*;
 pub use purge::*;
+pub use std::io::{Error, ErrorKind, Result};
