@@ -7,6 +7,7 @@ mod port;
 mod stop_bits;
 
 pub(crate) use direction::Direction;
+use std::time::Duration;
 
 pub use baud_rate::BaudRate;
 pub use data_bits::DataBits;
@@ -27,6 +28,8 @@ pub struct SerialConfig<P: AsRef<str>, D: Direction = FullDuplex> {
     flow_control: FlowControl,
     dtr: bool,
     rts: bool,
+    read_timeout: Option<Duration>,
+    write_timeout: Option<Duration>,
     mode: D,
 }
 
@@ -67,6 +70,16 @@ impl<P: AsRef<str>, D: Direction> SerialConfig<P, D> {
         self
     }
 
+    pub fn with_read_timeout(mut self, timeout: impl Into<Option<Duration>>) -> Self {
+        self.read_timeout = timeout.into();
+        self
+    }
+
+    pub fn with_write_timeout(mut self, timeout: impl Into<Option<Duration>>) -> Self {
+        self.write_timeout = timeout.into();
+        self
+    }
+
     pub fn port(&self) -> &Port<P> {
         &self.port
     }
@@ -99,6 +112,14 @@ impl<P: AsRef<str>, D: Direction> SerialConfig<P, D> {
         self.rts
     }
 
+    pub fn read_timeout(&self) -> Option<Duration> {
+        self.read_timeout
+    }
+
+    pub fn write_timeout(&self) -> Option<Duration> {
+        self.write_timeout
+    }
+
     pub fn mode(&self) -> &D {
         &self.mode
     }
@@ -115,6 +136,8 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
             flow_control: FlowControl::default(),
             dtr: true,
             rts: true,
+            read_timeout: None,
+            write_timeout: None,
             mode: FullDuplex::default(),
         }
     }
@@ -129,6 +152,8 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
             flow_control: self.flow_control,
             dtr: self.dtr,
             rts: self.rts,
+            read_timeout: self.read_timeout,
+            write_timeout: self.write_timeout,
             mode: HalfDuplex::default(),
         }
     }
@@ -163,6 +188,8 @@ impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
             flow_control: self.flow_control,
             dtr: self.dtr,
             rts: self.rts,
+            read_timeout: self.read_timeout,
+            write_timeout: self.write_timeout,
             mode: FullDuplex::default(),
         }
     }
