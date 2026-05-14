@@ -4,7 +4,7 @@ mod unix;
 mod windows;
 
 #[cfg(unix)]
-pub(super) use unix::InnerStream;
+pub use unix::*;
 
 #[cfg(windows)]
-pub(super) use windows::InnerStream;
+pub use windows::*;
