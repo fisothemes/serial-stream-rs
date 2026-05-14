@@ -1,6 +1,6 @@
 use super::sys::InnerStream;
 use super::{ReadHalf, WriteHalf};
-use crate::{Direction, FullDuplex, HalfDuplex, Purge, SerialConfig};
+use crate::{Direction, FullDuplex, HalfDuplex, Port, Purge, SerialConfig};
 use std::io::{self, Read, Write};
 use std::time::Duration;
 
@@ -37,6 +37,14 @@ impl<P: AsRef<str>, D: Direction> SerialStream<P, D> {
 
     pub fn write_timeout(&self) -> io::Result<Option<Duration>> {
         todo!()
+    }
+}
+
+impl<P: AsRef<str> + From<String>> SerialStream<P> {
+    pub fn available_ports() -> io::Result<impl Iterator<Item = Port<P>>> {
+        // Placeholder implementation. Makes compiler happy.
+        let raw_ports = Vec::new();
+        Ok(raw_ports.into_iter().map(|s| Port::new(P::from(s))))
     }
 }
 
