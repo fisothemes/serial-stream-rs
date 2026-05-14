@@ -9,8 +9,8 @@ pub struct WriteHalf<P: AsRef<str>> {
 }
 
 impl<P: AsRef<str>> WriteHalf<P> {
-    pub fn purge(&self, purge: Purge) -> io::Result<()> {
-        let _ = purge;
+    pub fn purge(&self, what: Purge) -> io::Result<()> {
+        let _ = what;
         todo!()
     }
 

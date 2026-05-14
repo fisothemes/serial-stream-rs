@@ -9,7 +9,7 @@ pub struct ReadHalf<P: AsRef<str>> {
 }
 
 impl<P: AsRef<str>> ReadHalf<P> {
-    pub fn purge(&self, what: Purge) {
+    pub fn purge(&self, what: Purge) -> io::Result<()> {
         let _ = what;
         todo!()
     }
