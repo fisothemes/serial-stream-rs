@@ -11,7 +11,7 @@ use std::time::Duration;
 
 pub use baud_rate::BaudRate;
 pub use data_bits::DataBits;
-pub use direction::{FullDuplex, HalfDuplex};
+pub use direction::{AutoHalfDuplex, FullDuplex, HalfDuplex};
 pub use flow_control::FlowControl;
 pub use parity::Parity;
 pub use port::Port;
@@ -159,25 +159,31 @@ impl<P: AsRef<str>> SerialConfig<P, FullDuplex> {
     }
 }
 
+impl<P: AsRef<str>> From<P> for SerialConfig<P, FullDuplex> {
+    fn from(port: P) -> Self {
+        Self::new(port)
+    }
+}
+
+impl<P: AsRef<str>> From<(P, BaudRate)> for SerialConfig<P, FullDuplex> {
+    fn from((port, baud_rate): (P, BaudRate)) -> Self {
+        Self::new(port).with_baud_rate(baud_rate)
+    }
+}
+
+impl<P: AsRef<str>> From<SerialConfig<P, HalfDuplex>> for SerialConfig<P, FullDuplex> {
+    fn from(config: SerialConfig<P, HalfDuplex>) -> Self {
+        config.into_full_duplex()
+    }
+}
+
+impl<P: AsRef<str>> From<SerialConfig<P, AutoHalfDuplex>> for SerialConfig<P, FullDuplex> {
+    fn from(config: SerialConfig<P, AutoHalfDuplex>) -> Self {
+        config.into_full_duplex()
+    }
+}
+
 impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
-    pub fn with_rts_turnaround_delay_ms(mut self, value: u32) -> Self {
-        self.mode = HalfDuplex::new(value, self.mode.invert_rts_pin());
-        self
-    }
-
-    pub fn with_invert_rts_pin(mut self, value: bool) -> Self {
-        self.mode = HalfDuplex::new(self.mode.rts_turnaround_delay_ms(), value);
-        self
-    }
-
-    pub fn rts_turnaround_delay_ms(&self) -> u32 {
-        self.mode.rts_turnaround_delay_ms()
-    }
-
-    pub fn invert_rts_pin(&self) -> bool {
-        self.mode.invert_rts_pin()
-    }
-
     pub fn into_full_duplex(self) -> SerialConfig<P, FullDuplex> {
         SerialConfig {
             port: self.port,
@@ -193,16 +199,81 @@ impl<P: AsRef<str>> SerialConfig<P, HalfDuplex> {
             mode: FullDuplex::default(),
         }
     }
-}
 
-impl<T: AsRef<str>> From<T> for SerialConfig<T, FullDuplex> {
-    fn from(port: T) -> Self {
-        Self::new(port)
+    pub fn into_auto(self) -> SerialConfig<P, AutoHalfDuplex> {
+        SerialConfig {
+            port: self.port,
+            baud_rate: self.baud_rate,
+            data_bits: self.data_bits,
+            parity: self.parity,
+            stop_bits: self.stop_bits,
+            flow_control: self.flow_control,
+            dtr: self.dtr,
+            rts: self.rts,
+            read_timeout: self.read_timeout,
+            write_timeout: self.write_timeout,
+            mode: AutoHalfDuplex::default(),
+        }
     }
 }
 
-impl<T: AsRef<str>> From<(T, BaudRate)> for SerialConfig<T, FullDuplex> {
-    fn from((port, baud_rate): (T, BaudRate)) -> Self {
-        Self::new(port).with_baud_rate(baud_rate)
+impl<P: AsRef<str>> From<SerialConfig<P, AutoHalfDuplex>> for SerialConfig<P, HalfDuplex> {
+    fn from(config: SerialConfig<P, AutoHalfDuplex>) -> Self {
+        config.into_manual()
+    }
+}
+
+impl<P: AsRef<str>> SerialConfig<P, AutoHalfDuplex> {
+    pub fn into_full_duplex(self) -> SerialConfig<P, FullDuplex> {
+        SerialConfig {
+            port: self.port,
+            baud_rate: self.baud_rate,
+            data_bits: self.data_bits,
+            parity: self.parity,
+            stop_bits: self.stop_bits,
+            flow_control: self.flow_control,
+            dtr: self.dtr,
+            rts: self.rts,
+            read_timeout: self.read_timeout,
+            write_timeout: self.write_timeout,
+            mode: FullDuplex::default(),
+        }
+    }
+
+    pub fn into_manual(self) -> SerialConfig<P, HalfDuplex> {
+        SerialConfig {
+            port: self.port,
+            baud_rate: self.baud_rate,
+            data_bits: self.data_bits,
+            parity: self.parity,
+            stop_bits: self.stop_bits,
+            flow_control: self.flow_control,
+            dtr: self.dtr,
+            rts: self.rts,
+            read_timeout: self.read_timeout,
+            write_timeout: self.write_timeout,
+            mode: HalfDuplex::default(),
+        }
+    }
+
+    pub fn with_delay_before_send(mut self, delay: Duration) -> Self {
+        self.mode = self.mode.with_delay_before_send(delay);
+        self
+    }
+
+    pub fn with_delay_after_send(mut self, delay: Duration) -> Self {
+        self.mode = self.mode.with_delay_after_send(delay);
+        self
+    }
+
+    pub fn with_inverted_rts(mut self, invert: bool) -> Self {
+        self.mode = self.mode.with_invert_rts(invert);
+        self
+    }
+}
+
+impl<P: AsRef<str>> From<SerialConfig<P, HalfDuplex>> for SerialConfig<P, AutoHalfDuplex> {
+    fn from(config: SerialConfig<P, HalfDuplex>) -> Self {
+        config.into_auto()
     }
 }

@@ -1,6 +1,6 @@
 use super::sys::InnerStream;
 use super::{ReadHalf, WriteHalf};
-use crate::{Direction, FullDuplex, HalfDuplex, Port, Purge, SerialConfig};
+use crate::{AutoHalfDuplex, Direction, FullDuplex, HalfDuplex, Port, Purge, SerialConfig};
 use std::io::{self, Read, Write};
 use std::time::Duration;
 
@@ -38,27 +38,6 @@ impl<P: AsRef<str>, D: Direction> SerialStream<P, D> {
     pub fn write_timeout(&self) -> io::Result<Option<Duration>> {
         todo!()
     }
-}
-
-impl<P: AsRef<str> + From<String>> SerialStream<P> {
-    pub fn available_ports() -> io::Result<impl Iterator<Item = Port<P>>> {
-        // Placeholder implementation. Makes compiler happy.
-        let raw_ports = Vec::new();
-        Ok(raw_ports.into_iter().map(|s| Port::new(P::from(s))))
-    }
-}
-
-impl<P: AsRef<str>> SerialStream<P, FullDuplex> {
-    pub fn try_split(self) -> io::Result<(ReadHalf<P>, WriteHalf<P>)> {
-        todo!()
-    }
-}
-
-impl<P: AsRef<str>> SerialStream<P, HalfDuplex> {
-    pub fn set_rts(&mut self, level: bool) -> io::Result<()> {
-        let _ = level;
-        todo!()
-    }
 
     pub fn flush_hardware(&mut self) -> io::Result<()> {
         todo!()
@@ -80,5 +59,50 @@ impl<P: AsRef<str>, D: Direction> Write for SerialStream<P, D> {
 
     fn flush(&mut self) -> io::Result<()> {
         todo!()
+    }
+}
+
+impl<P: AsRef<str> + From<String>> SerialStream<P> {
+    pub fn available_ports() -> io::Result<impl Iterator<Item = Port<P>>> {
+        // Placeholder implementation. Makes compiler happy.
+        let raw_ports = Vec::new();
+        Ok(raw_ports.into_iter().map(|s| Port::new(P::from(s))))
+    }
+}
+
+impl<P: AsRef<str>> SerialStream<P, FullDuplex> {
+    pub fn try_split(self) -> io::Result<(ReadHalf<P>, WriteHalf<P>)> {
+        todo!()
+    }
+}
+
+impl<P: AsRef<str>> SerialStream<P, HalfDuplex> {
+    pub fn try_into_auto(self) -> io::Result<SerialStream<P, AutoHalfDuplex>> {
+        todo!()
+    }
+
+    pub fn set_rts(&mut self, level: bool) -> io::Result<()> {
+        let _ = level;
+        todo!()
+    }
+}
+
+impl<P: AsRef<str>> TryFrom<SerialStream<P, HalfDuplex>> for SerialStream<P, AutoHalfDuplex> {
+    type Error = io::Error;
+    fn try_from(value: SerialStream<P, HalfDuplex>) -> Result<Self, Self::Error> {
+        value.try_into_auto()
+    }
+}
+
+impl<P: AsRef<str>> SerialStream<P, AutoHalfDuplex> {
+    pub fn try_into_manual(self) -> io::Result<SerialStream<P, HalfDuplex>> {
+        todo!()
+    }
+}
+
+impl<P: AsRef<str>> TryFrom<SerialStream<P, AutoHalfDuplex>> for SerialStream<P, HalfDuplex> {
+    type Error = io::Error;
+    fn try_from(value: SerialStream<P, AutoHalfDuplex>) -> Result<Self, Self::Error> {
+        value.try_into_manual()
     }
 }
